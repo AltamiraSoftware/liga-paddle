@@ -1,6 +1,5 @@
 
 🏆 Liga de Pádel - Sistema de Gestión Deportiva
-📋 Descripción del Proyecto
 Este es un sistema web completo diseñado para la gestión y seguimiento de una liga de pádel. Fue desarrollado con un stack de tecnologías modernas para ofrecer una experiencia fluida. El sistema permite registrar jugadores, gestionar partidos con un formato profesional por sets, y mantener y visualizar clasificaciones y estadísticas en tiempo real.
 
 ✨ Características Principales

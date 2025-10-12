@@ -39,26 +39,67 @@ const PartidoForm = ({ onCreated }) => {
     };
     cargarJugadores();
   }, []);
-
-  const setsFromJuegos = () => {
-    const s1 = j11 > j12 ? 1 : (j12 > j11 ? -1 : 0);
-    const s2 = j21 > j22 ? 1 : (j22 > j21 ? -1 : 0);
-    const s3 = j31 > j32 ? 1 : (j32 > j31 ? -1 : 0);
-    
-    const eq1 = [s1, s2, s3].filter(v => v === 1).length;
-    const eq2 = [s1, s2, s3].filter(v => v === -1).length;
-    
-    // Validar empate 1-1: el tercer set debe completarse
-    if (eq1 === 1 && eq2 === 1) {
-      const set3Completado = (j31 >= 6 && j32 < j31) || (j32 >= 6 && j31 < j32) || 
-                            (j31 === 7 && j32 === 6) || (j32 === 7 && j31 === 6);
-      if (!set3Completado) {
-        return { sets1: 1, sets2: 1, empate: true }; // Empate si no se completa el 3er set
-      }
+  const validateSet = (a, b) => {
+    // Caso 1: set vacío → no se jugó
+    if (a === 0 && b === 0) {
+      return { completed: false, valid: true, winner: 0 };
     }
-    
-    return { sets1: eq1, sets2: eq2, empate: false };
+  
+    // Caso 2: números negativos o fuera de rango
+    if (a < 0 || b < 0 || a > 7 || b > 7) {
+      return { completed: false, valid: false, winner: 0 };
+    }
+  
+    // Caso 3: 6–6 no es válido en pádel (se define por tie-break → 7–6)
+    if (a === 6 && b === 6) {
+      return { completed: false, valid: false, winner: 0 };
+    }
+  
+    // Caso 4: victoria clara (6–0 a 6–4)
+    if ((a === 6 && b <= 4) || (b === 6 && a <= 4)) {
+      return { completed: true, valid: true, winner: a > b ? 1 : 2 };
+    }
+  
+    // Caso 5: tie-break → 7–5 o 7–6
+    if ((a === 7 && (b === 5 || b === 6)) || (b === 7 && (a === 5 || a === 6))) {
+      return { completed: true, valid: true, winner: a > b ? 1 : 2 };
+    }
+  
+    // Caso 6: cualquier otro (como 5–5, 6–7 con diferencia incorrecta, etc.)
+    return { completed: false, valid: false, winner: 0 };
   };
+  
+  const setsFromJuegos = () => {
+    const validateSet = (a, b) => {
+      if (a < 0 || b < 0) return { valid: false, completed: false };
+      if (a === 6 && b <= 4) return { winner: 1, completed: true, valid: true };
+      if (b === 6 && a <= 4) return { winner: 2, completed: true, valid: true };
+      if (a === 7 && (b === 5 || b === 6)) return { winner: 1, completed: true, valid: true };
+      if (b === 7 && (a === 5 || a === 6)) return { winner: 2, completed: true, valid: true };
+      if (a === 6 && b === 6) return { valid: false, completed: false }; // 6-6 no válido
+      return { completed: false, valid: true }; // set en curso o incompleto
+    };
+  
+    const s1 = validateSet(j11, j12);
+    const s2 = validateSet(j21, j22);
+    const s3 = validateSet(j31, j32);
+  
+    const resultados = [s1, s2, s3];
+  
+    const eq1 = resultados.filter(s => s.winner === 1).length;
+    const eq2 = resultados.filter(s => s.winner === 2).length;
+  
+    const incompleto = resultados.some(s => !s.completed && (s.valid || s.winner === undefined));
+    const invalid = resultados.some(s => !s.valid);
+  
+    // Empate si 1-1 en sets y el 3er set no se completó
+    const empate = eq1 === 1 && eq2 === 1 && !s3.completed;
+  
+    return { sets1: eq1, sets2: eq2, empate, invalid, incompleto };
+  };
+
+  
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -74,19 +115,23 @@ const PartidoForm = ({ onCreated }) => {
       return;
     }
 
-    const { sets1, sets2, empate } = setsFromJuegos();
-    if (sets1 === 0 && sets2 === 0) {
-      setErrorMsg('Debes introducir al menos un set válido');
-      return;
-    }
-    
-    if (empate) {
-      setErrorMsg('Si hay empate 1-1 en sets, el tercer set debe completarse (6-x o 7-6)');
-      return;
-    }
+    const { sets1, sets2, empate, invalid, incompleto } = setsFromJuegos();
 
-    setErrorMsg(null);
-    setLoading(true);
+if (invalid) {
+  setErrorMsg('Marcador inválido (por ejemplo 6–6 o datos incorrectos)');
+  return;
+}
+
+if (sets1 === 0 && sets2 === 0) {
+  setErrorMsg('Debes introducir al menos un set válido');
+  return;
+}
+
+// ⚠️ Solo mostrar aviso, pero no impedir guardar
+if (empate || incompleto) {
+  setErrorMsg('⚠️ Partido incompleto o empate, pero se guardarán los juegos jugados.');
+}
+
 
     try {
       await crearPartido({
@@ -248,13 +293,13 @@ const PartidoForm = ({ onCreated }) => {
           </div>
 
           {/* Vista rápida de sets calculados */}
-          <div className="mt-2 text-sm text-gray-300">
-            {(() => { 
-              const s = setsFromJuegos(); 
-              return s.empate ? `Sets: A ${s.sets1} - B ${s.sets2} (Empate - Completa el 3er set)` : `Sets: A ${s.sets1} - B ${s.sets2}`; 
-            })()}
-          </div>
-        </div>
+          {(() => {
+                    const s = setsFromJuegos();
+              if (s.invalid) return 'Marcador inválido en uno o más sets';
+              if (s.empate) return `Sets: A ${s.sets1} - B ${s.sets2} (Empate)`;
+              return `Sets: A ${s.sets1} - B ${s.sets2}`;
+          })()}
+</div>
 
         {/* Dobles faltas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -316,4 +361,4 @@ const PartidoForm = ({ onCreated }) => {
   );
 };
 
-export default PartidoForm;
+export default PartidoForm; 

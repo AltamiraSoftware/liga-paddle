@@ -38,8 +38,6 @@ Tailwind CSS	Estilado utility-first para un desarrollo rápido y diseño respons
 JavaScript ES6+	Sintaxis moderna, manejo de asincronía con async/await.
 Backend & Base de Datos
 Servicio	Uso Principal
-Supabase	Backend-as-a-Service, proveyendo autenticación, DB y storage.
-PostgreSQL	Base de datos relacional robusta.
 Stored Procedures (RPC)	Lógica de negocio crítica (actualización y reversión de estadísticas) implementada directamente en la DB.
 Row Level Security (RLS)	Políticas de seguridad implementadas a nivel de fila.
 DevOps & Despliegue
@@ -48,6 +46,13 @@ Vercel: Hosting y plataforma de despliegue continuo.
 Git: Control de versiones.
 
 Environment Variables: Gestión segura de credenciales.
+
+### 🧠 Base de datos
+Este proyecto usa **PostgreSQL + Supabase**.
+
+El esquema completo (tablas, funciones y triggers) está disponible en [`/supabase/schema.sql`](./supabase/schema.sql).
+
+Incluye toda la lógica para calcular puntuaciones, sets, juegos, y revertir estadísticas automáticamente.
 
 
 

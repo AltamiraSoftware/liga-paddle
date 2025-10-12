@@ -19,8 +19,9 @@ const JugadoresLista = ({ jugadores }) => {
             <th className="text-center py-3 px-4 text-sm font-medium text-gray-400">PJ</th>
             <th className="text-center py-3 px-4 text-sm font-medium text-gray-400">G</th>
             <th className="text-center py-3 px-4 text-sm font-medium text-gray-400">P</th>
+            <th className="text-center py-3 px-4 text-sm font-medium text-gray-400">E</th>
             <th className="text-center py-3 px-4 text-sm font-medium text-gray-400">Juegos</th>
-            <th className="text-center py-3 px-4 text-sm font-medium text-gray-400">DF</th>
+            <th className="text-center py-3 px-4 text-sm font-medium text-gray-400">DoblesF</th>
             <th className="text-center py-3 px-4 text-sm font-medium text-gray-400">Puntos</th>
             <th className="text-center py-3 px-4 text-sm font-medium text-gray-400">Tend.</th>
           </tr>
@@ -28,9 +29,11 @@ const JugadoresLista = ({ jugadores }) => {
         <tbody>
           {jugadores.map((jugador, index) => {
             const posicion = index + 1;
-            const victorias = Math.floor(jugador.puntuacion / 3);
-            const derrotas = Math.max(0, victorias - 2); // placeholder si no llevas PJ en DB
-            const partidosJugados = victorias + derrotas;
+            const partidosJugados = jugador.partidos_jugados || 0;
+            const victorias = jugador.partidos_ganados || 0;
+            const derrotas = jugador.partidos_perdidos || 0;
+            const empates = jugador.partidos_empatados || 0;
+            
             const porcentajeVictorias = partidosJugados > 0 ? Math.round((victorias / partidosJugados) * 100) : 0;
 
             return (
@@ -50,6 +53,7 @@ const JugadoresLista = ({ jugadores }) => {
                 <td className="py-4 px-4 text-center"><span className="font-medium">{partidosJugados}</span></td>
                 <td className="py-4 px-4 text-center"><span className="text-green-400 font-medium">{victorias}</span></td>
                 <td className="py-4 px-4 text-center"><span className="text-red-400 font-medium">{derrotas}</span></td>
+                <td className="py-4 px-4 text-center"><span className="font-medium">{empates}</span></td>
                 <td className="py-4 px-4 text-center"><span className="font-medium">{jugador.juegos_ganados || 0}</span></td>
                 <td className="py-4 px-4 text-center"><span className="font-medium">{jugador.dobles_faltas || 0}</span></td>
                 <td className="py-4 px-4 text-center"><span className="font-bold">{jugador.puntuacion}</span></td>
